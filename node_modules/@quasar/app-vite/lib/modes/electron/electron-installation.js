@@ -8,7 +8,7 @@ const hasTypescript = require('../../helpers/has-typescript')
 const { bundlerIsInstalled } = require('./bundler')
 
 const electronDeps = {
-  'electron': 'latest'
+  electron: 'latest'
 }
 
 function isInstalled () {
@@ -24,14 +24,14 @@ function add (silent) {
   }
 
   nodePackager.installPackage(
-    Object.entries(electronDeps).map(([name, version]) => `${name}@${version}`),
-    { isDev: true, displayName: 'Electron dependencies' }
+    Object.entries(electronDeps).map(([ name, version ]) => `${ name }@${ version }`),
+    { isDevDependency: true, displayName: 'Electron dependencies' }
   )
 
   log('Creating Electron source folder...')
   const format = hasTypescript ? 'ts' : 'default'
   fse.copySync(
-    appPaths.resolve.cli(`templates/electron/${format}`),
+    appPaths.resolve.cli(`templates/electron/${ format }`),
     appPaths.electronDir
   )
 
@@ -55,14 +55,14 @@ function remove () {
     return
   }
 
-  log(`Removing Electron source folder`)
+  log('Removing Electron source folder')
   fse.removeSync(appPaths.electronDir)
 
   const deps = Object.keys(electronDeps)
 
-  ;['packager', 'builder'].forEach(bundlerName => {
+  ;[ 'packager', 'builder' ].forEach(bundlerName => {
     if (bundlerIsInstalled(bundlerName)) {
-      deps.push(`electron-${bundlerName}`)
+      deps.push(`electron-${ bundlerName }`)
     }
   })
 

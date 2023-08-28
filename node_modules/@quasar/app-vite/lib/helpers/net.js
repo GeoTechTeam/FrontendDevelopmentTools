@@ -1,14 +1,16 @@
 const os = require('os')
 const net = require('net')
 
+module.exports.localHostList = [ '0.0.0.0', 'localhost', '127.0.0.1', '::1' ]
+
 module.exports.getExternalNetworkInterface = function () {
   const networkInterfaces = os.networkInterfaces()
   const devices = []
 
-  for (let deviceName of Object.keys(networkInterfaces)) {
-    const networkInterface = networkInterfaces[deviceName]
+  for (const deviceName of Object.keys(networkInterfaces)) {
+    const networkInterface = networkInterfaces[ deviceName ]
 
-    for (let networkAddress of networkInterface) {
+    for (const networkAddress of networkInterface) {
       if (!networkAddress.internal && networkAddress.family === 'IPv4') {
         devices.push({ deviceName, ...networkAddress })
       }
@@ -22,10 +24,10 @@ module.exports.getIPs = function () {
   const networkInterfaces = os.networkInterfaces()
   const list = []
 
-  for (let deviceName of Object.keys(networkInterfaces)) {
-    const networkInterface = networkInterfaces[deviceName]
+  for (const deviceName of Object.keys(networkInterfaces)) {
+    const networkInterface = networkInterfaces[ deviceName ]
 
-    for (let networkAddress of networkInterface) {
+    for (const networkAddress of networkInterface) {
       if (networkAddress.family === 'IPv4') {
         list.push(networkAddress.address)
       }
@@ -67,7 +69,7 @@ module.exports.isPortAvailable = async function (port, host) {
         tester.once('close', () => {
           resolve(true) // found available host/port
         })
-        .close()
+          .close()
       })
       .on('error', err => {
         reject(err)

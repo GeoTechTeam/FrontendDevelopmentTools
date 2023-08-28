@@ -1,4 +1,5 @@
 export * from "./api/vue-prop-types";
+export * from "./api/color";
 export * from "./api/cookies";
 export * from "./api/dialog";
 export * from "./api/qfile";
@@ -12,6 +13,7 @@ export * from "./api/qnotify";
 export * from "./api/qpopupproxy";
 export * from "./api/qeditor";
 export * from "./api/qloading";
+export * from "./api/qloadingbar";
 export * from "./api/touchswipe";
 export * from "./api/web-storage";
 export * from "./api/validation";

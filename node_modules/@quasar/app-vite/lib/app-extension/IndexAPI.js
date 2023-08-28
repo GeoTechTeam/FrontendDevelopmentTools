@@ -12,6 +12,7 @@ const BaseAPI = require('./BaseAPI')
  */
 module.exports = class IndexAPI extends BaseAPI {
   ctx
+  prompts
 
   __hooks = {
     extendQuasarConf: [],
@@ -32,9 +33,10 @@ module.exports = class IndexAPI extends BaseAPI {
     describeApi: {}
   }
 
-  constructor ({ ctx, ...opts }) {
+  constructor (opts) {
     super(opts)
-    this.ctx = ctx
+    this.ctx = opts.ctx
+    this.prompts = opts.prompts
   }
 
   /**
@@ -87,11 +89,11 @@ module.exports = class IndexAPI extends BaseAPI {
     const json = getPackageJson(packageName)
 
     if (json === void 0) {
-      fatal(`Extension(${this.extId}): Dependency not found - ${packageName}. Please install it.`)
+      fatal(`Extension(${ this.extId }): Dependency not found - ${ packageName }. Please install it.`)
     }
 
     if (!semver.satisfies(json.version, semverCondition)) {
-      fatal(`Extension(${this.extId}): is not compatible with ${packageName} v${json.version}. Required version: ${semverCondition}`)
+      fatal(`Extension(${ this.extId }): is not compatible with ${ packageName } v${ json.version }. Required version: ${ semverCondition }`)
     }
   }
 
@@ -222,7 +224,7 @@ module.exports = class IndexAPI extends BaseAPI {
    *   ({ args: [ string, ... ], params: {object} }) => ?Promise
    */
   registerCommand (commandName, fn) {
-    this.__hooks.commands[commandName] = fn
+    this.__hooks.commands[ commandName ] = fn
   }
 
   /**
@@ -235,7 +237,7 @@ module.exports = class IndexAPI extends BaseAPI {
   registerDescribeApi (name, relativePath) {
     const callerPath = getCallerPath()
 
-    this.__hooks.describeApi[name] = {
+    this.__hooks.describeApi[ name ] = {
       callerPath,
       relativePath
     }
@@ -259,7 +261,7 @@ module.exports = class IndexAPI extends BaseAPI {
    * @param {function} fn
    *   (api, { quasarConf }) => ?Promise
    */
-  afterDev(fn) {
+  afterDev (fn) {
     this.__addHook('afterDev', fn)
   }
 

@@ -12,20 +12,20 @@ const urlRangePattern = /^[a-zA-Z]/
  * // { 'quasar': '2.7.1', 'whatever': 'https://some.url' }
  * ```
  */
-module.exports = function getFixedDeps(deps) {
+module.exports = function getFixedDeps (deps) {
   if (!deps) {
     return {}
   }
 
   const appDeps = { ...deps }
 
-  Object.entries(deps).forEach(([name, versionRange]) => {
+  Object.entries(deps).forEach(([ name, versionRange ]) => {
     if (urlRangePattern.test(versionRange)) {
       return
     }
 
     const pkg = getPackageJson(name)
-    appDeps[name] = pkg !== void 0 ? pkg.version : versionRange
+    appDeps[ name ] = pkg !== void 0 ? pkg.version : versionRange
   })
 
   return appDeps
