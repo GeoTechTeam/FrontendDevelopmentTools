@@ -13,7 +13,10 @@
     "build": "quasar build",
     "buildpwa": "quasar build -m pwa",
     "newboot": "quasar new boot LibInjection",
-    "newext": "quasar ext remove qhierarchy"
+    "newext": "quasar ext remove qhierarchy",
+	"checkUpgrade": "quasar upgrade",
+	"upgrade": "quasar upgrade install",
+	"instupgrade": "quasar ext add upgrade"
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
