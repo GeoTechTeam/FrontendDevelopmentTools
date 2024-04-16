@@ -106,7 +106,7 @@ export default createComponent({
     }
 
     function onKeyup (e) {
-      if (isClickable.value === true && isKeyCode(e, 13) === true) {
+      if (isClickable.value === true && isKeyCode(e, [ 13, 32 ]) === true) {
         stopAndPrevent(e)
 
         // for ripple

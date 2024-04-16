@@ -1,53 +1,106 @@
 <template>
-  <q-layout view="hHh lpR fFf">
-
-    <q-header elevated class="bg-primary text-white" height-hint="98">
+  <q-layout view="lHh Lpr lFf">
+    <q-header elevated>
       <q-toolbar>
+        <q-btn
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Menu"
+          @click="toggleLeftDrawer"
+        />
+
         <q-toolbar-title>
-          ХАМ
+          Quasar App
         </q-toolbar-title>
 
-        <q-tabs v-model="tab" shrink stretch @update:model-value="updTab">
-          <q-route-tab name="table" icon="dataset" label="Таблица" to="/" @click="updTab" exact />
-          <q-route-tab name="map" icon="map" label="Карта" to="/map" exact />
-          <q-tab name="videos" label="Сбор данных" />
-          <q-tab name="protocols" label="Протоколы" />
-          <q-tab name="diffs" label="Погрешность" />
-          <q-tab name="help" label="Справочник" />
-        </q-tabs>
-        <q-space />
-        <q-select color="black" bg-color="white" filled v-model="model" :options="options" dense>
-          <template v-slot:prepend>
-            <q-icon name="water_drop" />
-          </template>
-        </q-select>
+        <div>Quasar v{{ $q.version }}</div>
       </q-toolbar>
-
     </q-header>
+
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      bordered
+    >
+      <q-list>
+        <q-item-label
+          header
+        >
+          Essential Links
+        </q-item-label>
+
+        <EssentialLink
+          v-for="link in linksList"
+          :key="link.title"
+          v-bind="link"
+        />
+      </q-list>
+    </q-drawer>
 
     <q-page-container>
       <router-view />
     </q-page-container>
-
-
   </q-layout>
 </template>
 
 <script setup>
-
 import { ref } from 'vue'
-import useQuasar from 'quasar/src/composables/use-quasar.js';
-import {useTabOptionStore} from "stores/tabOptionStore"
-const store = useTabOptionStore()
-console.log(store.getOption)
-const tab = ref(store.getOption)
-const options = ['Экология вода', 'Изыскания', 'Артскважины', 'Питьевая вода']
-const model = ref('Экология вода')
-const $q = useQuasar()
+import EssentialLink from 'components/EssentialLink.vue'
 
-function updTab (Value){
-  console.log(Value)
-  store.Change(Value)
+defineOptions({
+  name: 'MainLayout'
+})
+
+const linksList = [
+  {
+    title: 'Docs',
+    caption: 'quasar.dev',
+    icon: 'school',
+    link: 'https://quasar.dev'
+  },
+  {
+    title: 'Github',
+    caption: 'github.com/quasarframework',
+    icon: 'code',
+    link: 'https://github.com/quasarframework'
+  },
+  {
+    title: 'Discord Chat Channel',
+    caption: 'chat.quasar.dev',
+    icon: 'chat',
+    link: 'https://chat.quasar.dev'
+  },
+  {
+    title: 'Forum',
+    caption: 'forum.quasar.dev',
+    icon: 'record_voice_over',
+    link: 'https://forum.quasar.dev'
+  },
+  {
+    title: 'Twitter',
+    caption: '@quasarframework',
+    icon: 'rss_feed',
+    link: 'https://twitter.quasar.dev'
+  },
+  {
+    title: 'Facebook',
+    caption: '@QuasarFramework',
+    icon: 'public',
+    link: 'https://facebook.quasar.dev'
+  },
+  {
+    title: 'Quasar Awesome',
+    caption: 'Community Quasar projects',
+    icon: 'favorite',
+    link: 'https://awesome.quasar.dev'
+  }
+]
+
+const leftDrawerOpen = ref(false)
+
+function toggleLeftDrawer () {
+  leftDrawerOpen.value = !leftDrawerOpen.value
 }
-
 </script>

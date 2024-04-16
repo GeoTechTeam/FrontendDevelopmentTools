@@ -7,11 +7,23 @@ export default createComponent({
 
   inheritAttrs: false,
 
-  props: useFieldProps,
+  props: {
+    ...useFieldProps,
+
+    tag: {
+      type: String,
+      default: 'label'
+    }
+  },
 
   emits: useFieldEmits,
 
   setup () {
-    return useField(useFieldState())
+    return useField(
+      useFieldState({
+        requiredForAttr: false,
+        tagProp: true
+      })
+    )
   }
 })

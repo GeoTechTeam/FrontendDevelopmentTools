@@ -6,7 +6,7 @@
       </div>
 
       <div class="text-h2" style="opacity:.4">
-        Страницы не существует
+        Oops. Nothing here...
       </div>
 
       <q-btn
@@ -22,10 +22,8 @@
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
-
-export default defineComponent({
+<script setup>
+defineOptions({
   name: 'ErrorNotFound'
-})
+});
 </script>
