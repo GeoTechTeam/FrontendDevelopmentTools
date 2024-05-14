@@ -3,7 +3,7 @@
   "version": "1.0.4",
   "description": "Frontend development tools for building web applications",
   "productName": "FDT",
-  "author": "GeoTechTeam <alexeyzavvv@gmail.com>",
+  "author": "GeoTechTeam <alexeyzavvv@gmail.com>" ,
   "private": true,
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
