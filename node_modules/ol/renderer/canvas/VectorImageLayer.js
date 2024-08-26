@@ -51,6 +51,7 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
 
   /**
    * Clean up.
+   * @override
    */
   disposeInternal() {
     this.vectorRenderer_.dispose();
@@ -61,6 +62,7 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
    * Asynchronous layer level hit detection.
    * @param {import("../../pixel.js").Pixel} pixel Pixel.
    * @return {Promise<Array<import("../../Feature").default>>} Promise that resolves with an array of features.
+   * @override
    */
   getFeatures(pixel) {
     if (!this.vectorRenderer_) {
@@ -75,6 +77,7 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
 
   /**
    * Perform action necessary to get the layer rendered after new fonts have loaded
+   * @override
    */
   handleFontsChanged() {
     this.vectorRenderer_.handleFontsChanged();
@@ -84,6 +87,7 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
    * Determine whether render should be called.
    * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @return {boolean} Layer is ready to be rendered.
+   * @override
    */
   prepareFrame(frameState) {
     const pixelRatio = frameState.pixelRatio;
@@ -155,7 +159,7 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
         if (image.getState() !== ImageState.LOADED) {
           return;
         }
-        this.image_ = emptyImage ? null : image;
+        this.image = emptyImage ? null : image;
         const imagePixelRatio = image.getPixelRatio();
         const renderedResolution =
           (fromResolutionLike(image.getResolution()) * pixelRatio) /
@@ -175,19 +179,21 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
       image.load();
     }
 
-    if (this.image_) {
+    if (this.image) {
       this.renderedPixelToCoordinateTransform_ =
         frameState.pixelToCoordinateTransform.slice();
     }
 
-    return !!this.image_;
+    return !!this.image;
   }
 
   /**
+   * @override
    */
   preRender() {}
 
   /**
+   * @override
    */
   postRender() {}
 
@@ -203,6 +209,7 @@ class CanvasVectorImageLayerRenderer extends CanvasImageLayerRenderer {
    * @param {Array<import("../Map.js").HitMatch<T>>} matches The hit detected matches with tolerance.
    * @return {T|undefined} Callback result.
    * @template T
+   * @override
    */
   forEachFeatureAtCoordinate(
     coordinate,

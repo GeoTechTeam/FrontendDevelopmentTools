@@ -95,13 +95,13 @@ import {
  */
 
 /***
- * @template {import("../Feature.js").FeatureLike} T
- * @typedef {T extends import("../render/Feature.js").default ? typeof import("../render/Feature.js").default : typeof import("../Feature.js").default} FeatureToFeatureClass<T>
+ * @template {import('../Feature.js').FeatureLike} T
+ * @typedef {T extends RenderFeature ? typeof RenderFeature : typeof Feature} FeatureToFeatureClass
  */
 
 /***
  * @template {import("../Feature.js").FeatureClass} T
- * @typedef {T[keyof T] extends import("../render/Feature.js").default ? import("../render/Feature.js").default : import("../Feature.js").default} FeatureClassToFeature<T>
+ * @typedef {T[keyof T] extends RenderFeature ? RenderFeature : Feature} FeatureClassToFeature
  */
 
 /**
@@ -113,7 +113,7 @@ import {
  * {@link module:ol/Feature~Feature} objects from a variety of commonly used geospatial
  * file formats.  See the documentation for each format for more details.
  *
- * @template {import('../Feature.js').FeatureClass} [T=typeof import('../Feature.js').default]
+ * @template {import('../Feature.js').FeatureLike} [FeatureType=import("../Feature.js").default]
  * @abstract
  * @api
  */
@@ -133,9 +133,11 @@ class FeatureFormat {
 
     /**
      * @protected
-     * @type {import("../Feature.js").FeatureClass}
+     * @type {FeatureToFeatureClass<FeatureType>}
      */
-    this.featureClass = Feature;
+    this.featureClass = /** @type {FeatureToFeatureClass<FeatureType>} */ (
+      Feature
+    );
 
     /**
      * A list media types supported by the format in descending order of preference.
@@ -206,7 +208,7 @@ class FeatureFormat {
    * @abstract
    * @param {Document|Element|Object|string} source Source.
    * @param {ReadOptions} [options] Read options.
-   * @return {import("../Feature.js").FeatureLike|Array<import("../render/Feature.js").default>} Feature.
+   * @return {FeatureType|Array<FeatureType>} Feature.
    */
   readFeature(source, options) {
     return abstract();
@@ -218,7 +220,7 @@ class FeatureFormat {
    * @abstract
    * @param {Document|Element|ArrayBuffer|Object|string} source Source.
    * @param {ReadOptions} [options] Read options.
-   * @return {Array<import('../Feature.js').FeatureLike|FeatureClassToFeature<T>>} Features.
+   * @return {Array<FeatureType>} Features.
    */
   readFeatures(source, options) {
     return abstract();
@@ -251,7 +253,7 @@ class FeatureFormat {
    * Encode a feature in this format.
    *
    * @abstract
-   * @param {import("../Feature.js").default} feature Feature.
+   * @param {Feature} feature Feature.
    * @param {WriteOptions} [options] Write options.
    * @return {string|ArrayBuffer} Result.
    */
@@ -263,7 +265,7 @@ class FeatureFormat {
    * Encode an array of features in this format.
    *
    * @abstract
-   * @param {Array<import("../Feature.js").default>} features Features.
+   * @param {Array<Feature>} features Features.
    * @param {WriteOptions} [options] Write options.
    * @return {string|ArrayBuffer} Result.
    */

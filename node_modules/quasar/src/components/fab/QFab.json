@@ -1,12 +1,9 @@
 {
-  "mixins": [ "composables/private/use-model-toggle", "components/fab/use-fab" ],
+  "mixins": [ "composables/private.use-model-toggle/use-model-toggle", "components/fab/use-fab" ],
 
   "props": {
     "model-value": {
-      "extends": "model-value",
-      "desc": "Controls state of fab actions (showing/hidden); Works best with v-model directive, otherwise use along listening to 'update:modelValue' event",
-      "category": "model",
-      "required": false
+      "desc": "Controls state of fab actions (showing/hidden); Works best with v-model directive, otherwise use along listening to 'update:modelValue' event"
     },
 
     "icon": {
@@ -15,6 +12,10 @@
 
     "active-icon": {
       "extends": "icon"
+    },
+
+    "hide-label": {
+      "default": "null"
     },
 
     "hide-icon": {

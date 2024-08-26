@@ -13,7 +13,8 @@ import {
 } from '../render/canvas/style.js';
 
 /**
- * @template {import("../source/Vector.js").default|import("../source/VectorTile.js").default} VectorSourceType
+ * @template {import('../Feature').FeatureLike} FeatureType
+ * @template {import("../source/Vector.js").default<FeatureType>|import("../source/VectorTile.js").default<FeatureType>} VectorSourceType<FeatureType>
  * @typedef {Object} Options
  * @property {string} [className='ol-layer'] A CSS class name to set to the layer element.
  * @property {number} [opacity=1] Opacity (0, 1).
@@ -77,14 +78,15 @@ const Property = {
  * property on the layer object; for example, setting `title: 'My Title'` in the
  * options means that `title` is observable, and has get/set accessors.
  *
- * @template {import("../source/Vector.js").default|import("../source/VectorTile.js").default} VectorSourceType
- * @template {import("../renderer/canvas/VectorLayer.js").default|import("../renderer/canvas/VectorTileLayer.js").default|import("../renderer/canvas/VectorImageLayer.js").default|import("../renderer/webgl/PointsLayer.js").default} RendererType
+ * @template {import('../Feature').FeatureLike} FeatureType
+ * @template {import("../source/Vector.js").default<FeatureType>|import("../source/VectorTile.js").default<FeatureType>} VectorSourceType<FeatureType>
  * @extends {Layer<VectorSourceType, RendererType>}
+ * @template {import("../renderer/canvas/VectorLayer.js").default|import("../renderer/canvas/VectorTileLayer.js").default|import("../renderer/canvas/VectorImageLayer.js").default|import("../renderer/webgl/PointsLayer.js").default} RendererType
  * @api
  */
 class BaseVectorLayer extends Layer {
   /**
-   * @param {Options<VectorSourceType>} [options] Options.
+   * @param {Options<FeatureType, VectorSourceType>} [options] Options.
    */
   constructor(options) {
     options = options ? options : {};
@@ -112,7 +114,7 @@ class BaseVectorLayer extends Layer {
 
     /**
      * User provided style.
-     * @type {import("../style/Style.js").StyleLike}
+     * @type {import("../style/Style.js").StyleLike|import("../style/flat.js").FlatStyleLike}
      * @private
      */
     this.style_ = null;
@@ -147,6 +149,7 @@ class BaseVectorLayer extends Layer {
 
   /**
    * @return {string} Declutter group.
+   * @override
    */
   getDeclutter() {
     return this.declutter_;
@@ -165,6 +168,7 @@ class BaseVectorLayer extends Layer {
    * @param {import("../pixel.js").Pixel} pixel Pixel.
    * @return {Promise<Array<import("../Feature").FeatureLike>>} Promise that resolves with an array of features.
    * @api
+   * @override
    */
   getFeatures(pixel) {
     return super.getFeatures(pixel);
@@ -190,7 +194,7 @@ class BaseVectorLayer extends Layer {
   /**
    * Get the style for features.  This returns whatever was passed to the `style`
    * option at construction or to the `setStyle` method.
-   * @return {import("../style/Style.js").StyleLike|null|undefined} Layer style.
+   * @return {import("../style/Style.js").StyleLike|import("../style/flat.js").FlatStyleLike|null|undefined} Layer style.
    * @api
    */
   getStyle() {
@@ -226,6 +230,7 @@ class BaseVectorLayer extends Layer {
    * Render declutter items for this layer
    * @param {import("../Map.js").FrameState} frameState Frame state.
    * @param {import("../layer/Layer.js").State} layerState Layer state.
+   * @override
    */
   renderDeclutter(frameState, layerState) {
     const declutterGroup = this.getDeclutter();
@@ -265,9 +270,10 @@ class BaseVectorLayer extends Layer {
    * @api
    */
   setStyle(style) {
-    this.style_ = toStyleLike(style);
+    this.style_ = style === undefined ? createDefaultStyle : style;
+    const styleLike = toStyleLike(style);
     this.styleFunction_ =
-      style === null ? undefined : toStyleFunction(this.style_);
+      style === null ? undefined : toStyleFunction(styleLike);
     this.changed();
   }
 }

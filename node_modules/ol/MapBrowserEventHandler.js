@@ -77,6 +77,9 @@ class MapBrowserEventHandler extends Target {
      */
     this.trackedTouches_ = {};
 
+    /**
+     * @private
+     */
     this.element_ = element;
 
     /**
@@ -388,6 +391,7 @@ class MapBrowserEventHandler extends Target {
 
   /**
    * Clean up.
+   * @override
    */
   disposeInternal() {
     if (this.relayedListenerKey_) {

@@ -50,6 +50,7 @@ class CircleStyle extends RegularShape {
    * Clones the style.
    * @return {CircleStyle} The cloned style.
    * @api
+   * @override
    */
   clone() {
     const scale = this.getScale();
@@ -74,7 +75,7 @@ class CircleStyle extends RegularShape {
    * @api
    */
   setRadius(radius) {
-    this.radius_ = radius;
+    this.radius = radius;
     this.render();
   }
 }

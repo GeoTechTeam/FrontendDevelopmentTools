@@ -237,7 +237,7 @@ class OverviewMap extends Control {
 
     const move = function (event) {
       const position = /** @type {?} */ (computeDesiredMousePosition(event));
-      const coordinates = ovmap.getEventCoordinateInternal(
+      const coordinates = ovmap.getEventCoordinate(
         /** @type {MouseEvent} */ (position),
       );
 
@@ -249,15 +249,17 @@ class OverviewMap extends Control {
 
       scope.getMap().getView().setCenterInternal(coordinates);
 
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', endMoving);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', endMoving);
     };
 
     /* Binding */
 
-    overlayBox.addEventListener('mousedown', function () {
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', endMoving);
+    this.ovmapDiv_.addEventListener('pointerdown', function () {
+      if (event.target === overlayBox) {
+        window.addEventListener('pointermove', move);
+      }
+      window.addEventListener('pointerup', endMoving);
     });
   }
 
@@ -268,6 +270,7 @@ class OverviewMap extends Control {
    * the map here.
    * @param {import("../Map.js").default|null} map Map.
    * @api
+   * @override
    */
   setMap(map) {
     const oldMap = this.getMap();
@@ -297,10 +300,6 @@ class OverviewMap extends Control {
       const view = map.getView();
       if (view) {
         this.bindView_(view);
-        if (view.isDef()) {
-          this.ovmap_.updateSize();
-          this.resetExtent_();
-        }
       }
 
       if (!this.ovmap_.isRendered()) {
@@ -352,6 +351,11 @@ class OverviewMap extends Control {
     );
     // Sync once with the new view
     this.handleRotationChanged_();
+
+    if (view.isDef()) {
+      this.ovmap_.updateSize();
+      this.resetExtent_();
+    }
   }
 
   /**
@@ -505,7 +509,7 @@ class OverviewMap extends Control {
 
     const overlay = this.boxOverlay_;
     const box = this.boxOverlay_.getElement();
-    const center = view.getCenterInternal();
+    const center = view.getCenter();
     const resolution = view.getResolution();
     const ovresolution = ovview.getResolution();
     const width = (mapSize[0] * resolution) / ovresolution;
@@ -533,11 +537,10 @@ class OverviewMap extends Control {
     this.ovmapPostrenderKey_ = listenOnce(
       this.ovmap_,
       MapEventType.POSTRENDER,
-      function (event) {
+      (event) => {
         delete this.ovmapPostrenderKey_;
         this.updateBox_();
       },
-      this,
     );
   }
 

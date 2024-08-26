@@ -141,6 +141,9 @@ class Link extends Interaction {
      */
     this.initial_ = true;
 
+    /**
+     * @private
+     */
     this.updateState_ = this.updateState_.bind(this);
 
     /**
@@ -207,6 +210,7 @@ class Link extends Interaction {
 
   /**
    * @param {import("../Map.js").default|null} map Map.
+   * @override
    */
   setMap(map) {
     const oldMap = this.getMap();

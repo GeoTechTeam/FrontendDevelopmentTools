@@ -37,6 +37,7 @@ const maxZoom = 22;
  *   imageTile.getImage().src = src;
  * };
  * ```
+ * @property {Array<string>} [apiOptions] An array of values specifying additional options to apply.
  * @property {boolean} [wrapX=true] Wrap the world horizontally.
  * @property {number} [transition] Duration of the opacity transition for rendering.
  * To disable the opacity transition, pass `transition: 0`.
@@ -56,6 +57,7 @@ const maxZoom = 22;
  * @property {Array<string>} [layerTypes] The layer types.
  * @property {boolean} [overlay] The overlay.
  * @property {Array<Object>} [styles] The styles.
+ * @property {Array<string>} [apiOptions] An array of values specifying additional options to apply.
  */
 
 /**
@@ -81,14 +83,12 @@ class Google extends TileImage {
    */
   constructor(options) {
     const highDpi = !!options.highDpi;
-    const opaque = !(options.overlay === true);
 
     super({
       attributionsCollapsible: options.attributionsCollapsible,
       cacheSize: options.cacheSize,
       crossOrigin: 'anonymous',
       interpolate: options.interpolate,
-      opaque: opaque,
       projection: 'EPSG:3857',
       reprojectionErrorThreshold: options.reprojectionErrorThreshold,
       state: 'loading',
@@ -107,6 +107,7 @@ class Google extends TileImage {
 
     /**
      * @type {Error|null}
+     * @private
      */
     this.error_ = null;
 
@@ -135,6 +136,9 @@ class Google extends TileImage {
     }
     if (options.overlay === true) {
       sessionTokenRequest.overlay = true;
+    }
+    if (options.apiOptions) {
+      sessionTokenRequest.apiOptions = options.apiOptions;
     }
 
     /**
@@ -301,6 +305,9 @@ class Google extends TileImage {
     return this.previousViewportAttribution_;
   }
 
+  /**
+   * @override
+   */
   disposeInternal() {
     clearTimeout(this.sessionRefreshId_);
     super.disposeInternal();

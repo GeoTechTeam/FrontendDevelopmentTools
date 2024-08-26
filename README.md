@@ -1,14 +1,41 @@
-# FDT (FrontendDevolopmenTools)
+# fdp (frontenddevelopmenttools)
 
-Frontend development tools for building web applications
-Шаблон для разработки веб приложений на базе Vue 3 и Quasar
+A Quasar Project
 
-### Запуск
+## Install the dependencies
 ```bash
-npm run dev
+yarn
+# or
+npm install
 ```
 
-### Компиляция
+### Start the app in development mode (hot-code reloading, error reporting, etc.)
 ```bash
-npm run build
+quasar dev
 ```
+
+
+### Lint the files
+```bash
+yarn lint
+# or
+npm run lint
+```
+
+
+### Format the files
+```bash
+yarn format
+# or
+npm run format
+```
+
+
+
+### Build the app for production
+```bash
+quasar build
+```
+
+### Customize the configuration
+See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).

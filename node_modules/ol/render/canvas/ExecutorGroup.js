@@ -118,6 +118,7 @@ class ExecutorGroup {
     this.renderedContext_ = null;
 
     /**
+     * @private
      * @type {Object<number, Array<import("./ZIndexContext.js").default>>}
      */
     this.deferredZIndexContexts_ = {};
@@ -255,9 +256,10 @@ class ExecutorGroup {
     /**
      * @param {import("../../Feature.js").FeatureLike} feature Feature.
      * @param {import("../../geom/SimpleGeometry.js").default} geometry Geometry.
+     * @param {import('../../style/Style.js').DeclutterMode} declutterMode Declutter mode.
      * @return {T|undefined} Callback result.
      */
-    function featureCallback(feature, geometry) {
+    function featureCallback(feature, geometry, declutterMode) {
       const imageData = context.getImageData(
         0,
         0,
@@ -268,6 +270,7 @@ class ExecutorGroup {
         if (imageData[indexes[i]] > 0) {
           if (
             !declutteredFeatures ||
+            declutterMode === 'none' ||
             (builderType !== 'Image' && builderType !== 'Text') ||
             declutteredFeatures.includes(feature)
           ) {
@@ -347,7 +350,7 @@ class ExecutorGroup {
    * @param {boolean} snapToPixel Snap point symbols and test to integer pixel.
    * @param {Array<import("../canvas.js").BuilderType>} [builderTypes] Ordered replay types to replay.
    *     Default is {@link module:ol/render/replay~ALL}
-   * @param {import("rbush").default|null} [declutterTree] Declutter tree.
+   * @param {import("rbush").default<import('./Executor.js').DeclutterEntry>|null} [declutterTree] Declutter tree.
    *     When set to null, no decluttering is done, even when the executor group has a `ZIndexContext`.
    */
   execute(
@@ -364,7 +367,8 @@ class ExecutorGroup {
     zs.sort(ascending);
 
     builderTypes = builderTypes ? builderTypes : ALL;
-    let i, ii, j, jj, replays, replay;
+    const maxBuilderTypes = ALL.length;
+    let i, ii, j, jj, replays;
     if (declutterTree) {
       zs.reverse();
     }
@@ -373,7 +377,7 @@ class ExecutorGroup {
       replays = this.executorsByZIndex_[zIndexKey];
       for (j = 0, jj = builderTypes.length; j < jj; ++j) {
         const builderType = builderTypes[j];
-        replay = replays[builderType];
+        const replay = replays[builderType];
         if (replay !== undefined) {
           const zIndexContext =
             declutterTree === null ? undefined : replay.getZIndexContext();
@@ -390,24 +394,41 @@ class ExecutorGroup {
             // visible outside the current extent when panning
             this.clip(context, transform);
           }
-          replay.execute(
-            context,
-            scaledCanvasSize,
-            transform,
-            viewRotation,
-            snapToPixel,
-            declutterTree,
-          );
+          if (
+            !zIndexContext ||
+            builderType === 'Text' ||
+            builderType === 'Image'
+          ) {
+            replay.execute(
+              context,
+              scaledCanvasSize,
+              transform,
+              viewRotation,
+              snapToPixel,
+              declutterTree,
+            );
+          } else {
+            zIndexContext.pushFunction((context) =>
+              replay.execute(
+                context,
+                scaledCanvasSize,
+                transform,
+                viewRotation,
+                snapToPixel,
+                declutterTree,
+              ),
+            );
+          }
           if (requireClip) {
             context.restore();
           }
           if (zIndexContext) {
             zIndexContext.offset();
-            const z = zs[i];
-            if (!this.deferredZIndexContexts_[z]) {
-              this.deferredZIndexContexts_[z] = [];
+            const index = zs[i] * maxBuilderTypes + j;
+            if (!this.deferredZIndexContexts_[index]) {
+              this.deferredZIndexContexts_[index] = [];
             }
-            this.deferredZIndexContexts_[z].push(zIndexContext);
+            this.deferredZIndexContexts_[index].push(zIndexContext);
           }
         }
       }
@@ -432,6 +453,7 @@ class ExecutorGroup {
         zIndexContext.draw(this.renderedContext_); // FIXME Pass clip to replay for temporarily enabling clip
         zIndexContext.clear();
       });
+      deferredZIndexContexts[zs[i]].length = 0;
     }
   }
 }

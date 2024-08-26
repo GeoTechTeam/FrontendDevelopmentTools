@@ -3,7 +3,7 @@
     "docsUrl": "https://v2.quasar.dev/vue-components/stepper"
   },
 
-  "mixins": [ "composables/private/use-panel.child" ],
+  "mixins": [ "composables/private.use-panel/use-panel.child" ],
 
   "props": {
     "icon": {
@@ -93,6 +93,12 @@
   "slots": {
     "default": {
       "desc": "The content of the step; Can also contain a QStepperNavigation if you want to handle step navigation and don't have a global navigation in place"
+    }
+  },
+
+  "events": {
+    "scroll": {
+      "internal": true
     }
   }
 }

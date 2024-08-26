@@ -233,7 +233,8 @@ export const registerFont = (function () {
     for (let i = 0, ii = fonts.length; i < ii; ++i) {
       const font = fonts[i];
       if (checkedFonts.get(font) < retries) {
-        if (isAvailable.apply(this, font.split('\n'))) {
+        const [style, weight, family] = font.split('\n');
+        if (isAvailable(style, weight, family)) {
           clear(textHeights);
           // Make sure that loaded fonts are picked up by Safari
           measureContext = null;
@@ -381,6 +382,7 @@ export function getTextDimensions(baseStyle, chunks) {
       lineWidths.push(lineWidth);
       lineWidth = 0;
       height += lineHeight;
+      lineHeight = 0;
       continue;
     }
     const font = chunks[i + 1] || baseStyle.font;

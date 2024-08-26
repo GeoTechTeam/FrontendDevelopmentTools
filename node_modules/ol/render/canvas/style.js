@@ -18,6 +18,7 @@ import {
   computeGeometryType,
   newParsingContext,
 } from '../../expr/expression.js';
+import {NO_COLOR} from '../../color.js';
 import {buildExpression, newEvaluationContext} from '../../expr/cpu.js';
 import {isEmpty} from '../../obj.js';
 import {toSize} from '../../size.js';
@@ -308,6 +309,11 @@ function buildFill(flatStyle, prefix, context) {
   if (prefix + 'fill-pattern-src' in flatStyle) {
     evaluateColor = patternEvaluator(flatStyle, prefix + 'fill-', context);
   } else {
+    if (flatStyle[prefix + 'fill-color'] === 'none') {
+      // avoids hit detection
+      return (context) => null;
+    }
+
     evaluateColor = colorLikeEvaluator(
       flatStyle,
       prefix + 'fill-color',
@@ -321,7 +327,7 @@ function buildFill(flatStyle, prefix, context) {
   const fill = new Fill();
   return function (context) {
     const color = evaluateColor(context);
-    if (color === 'none') {
+    if (color === NO_COLOR) {
       return null;
     }
     fill.setColor(color);
@@ -390,7 +396,7 @@ function buildStroke(flatStyle, prefix, context) {
   return function (context) {
     if (evaluateColor) {
       const color = evaluateColor(context);
-      if (color === 'none') {
+      if (color === NO_COLOR) {
         return null;
       }
       stroke.setColor(color);
@@ -1029,11 +1035,7 @@ function colorLikeEvaluator(flatStyle, name, context) {
   if (!(name in flatStyle)) {
     return null;
   }
-  const evaluator = buildExpression(
-    flatStyle[name],
-    ColorType | StringType,
-    context,
-  );
+  const evaluator = buildExpression(flatStyle[name], ColorType, context);
   return function (context) {
     return requireColorLike(evaluator(context), name);
   };

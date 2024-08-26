@@ -3,10 +3,10 @@
  */
 
 import TileImage from './TileImage.js';
-import {appendParams} from '../uri.js';
+import {appendParams, expandUrl} from '../uri.js';
 import {containsExtent} from '../extent.js';
 import {createFromCapabilitiesMatrixSet} from '../tilegrid/WMTS.js';
-import {createFromTileUrlFunctions, expandUrl} from '../tileurlfunction.js';
+import {createFromTileUrlFunctions} from '../tileurlfunction.js';
 import {equivalent, get as getProjection, transformExtent} from '../proj.js';
 
 /**
@@ -18,7 +18,7 @@ import {equivalent, get as getProjection, transformExtent} from '../proj.js';
  * @typedef {Object} Options
  * @property {import("./Source.js").AttributionLike} [attributions] Attributions.
  * @property {boolean} [attributionsCollapsible=true] Attributions are collapsible.
- * @property {number} [cacheSize] Initial tile cache size. Will auto-grow to hold at least the number of tiles in the viewport.
+ * @property {number} [cacheSize] Deprecated.  Use the cacheSize option on the layer instead.
  * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.  Note that
  * you must provide a `crossOrigin` value if you want to access pixel data with the Canvas renderer.
  * See https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image for more detail.
@@ -163,6 +163,7 @@ class WMTS extends TileImage {
    * Set the URLs to use for requests.
    * URLs may contain OGC conform URL Template Variables: {TileMatrix}, {TileRow}, {TileCol}.
    * @param {Array<string>} urls URLs.
+   * @override
    */
   setUrls(urls) {
     this.urls = urls;
@@ -448,7 +449,7 @@ export function optionsFromCapabilities(wmtsCap, config) {
   }
 
   let wrapX = false;
-  const switchXY = projection.getAxisOrientation().substr(0, 2) == 'ne';
+  const switchXY = projection.getAxisOrientation().startsWith('ne');
 
   let matrix = matrixSetObj.TileMatrix[0];
 

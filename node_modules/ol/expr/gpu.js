@@ -6,19 +6,18 @@ import {
   BooleanType,
   CallExpression,
   ColorType,
-  NoneType,
   NumberArrayType,
   NumberType,
   Ops,
+  SizeType,
   StringType,
   computeGeometryType,
-  isType,
-  overlapsType,
   parse,
   typeName,
 } from './expression.js';
 import {Uniforms} from '../renderer/webgl/TileLayer.js';
 import {asArray} from '../color.js';
+import {toSize} from '../size.js';
 
 /**
  * @param {string} operator Operator
@@ -63,13 +62,17 @@ export function arrayToGlsl(array) {
 export function colorToGlsl(color) {
   const array = asArray(color);
   const alpha = array.length > 3 ? array[3] : 1;
-  // all components are premultiplied with alpha value
-  return arrayToGlsl([
-    (array[0] / 255) * alpha,
-    (array[1] / 255) * alpha,
-    (array[2] / 255) * alpha,
-    alpha,
-  ]);
+  return arrayToGlsl([array[0] / 255, array[1] / 255, array[2] / 255, alpha]);
+}
+
+/**
+ * Normalizes and converts a number or array toa `vec2` array compatible with GLSL.
+ * @param {number|import('../size.js').Size} size Size.
+ * @return {string} The color expressed in the `vec4(1.0, 1.0, 1.0, 1.0)` form.
+ */
+export function sizeToGlsl(size) {
+  const array = toSize(size);
+  return arrayToGlsl(array);
 }
 
 /** @type {Object<string, number>} */
@@ -185,17 +188,7 @@ export function buildExpression(
   parsingContext,
   compilationContext,
 ) {
-  const expression = parse(encoded, parsingContext, type);
-  if (isType(expression.type, NoneType)) {
-    throw new Error(`No matching type was found`);
-  }
-  if (!overlapsType(type, expression.type)) {
-    const expected = typeName(type);
-    const actual = typeName(expression.type);
-    throw new Error(
-      `Expected expression to be of type ${expected}, got ${actual}`,
-    );
-  }
+  const expression = parse(encoded, type, parsingContext);
   return compile(expression, type, compilationContext);
 }
 
@@ -246,6 +239,7 @@ const compilers = {
     const prefix = context.inFragmentShader ? 'v_prop_' : 'a_prop_';
     return prefix + propName;
   },
+  [Ops.LineMetric]: () => 'currentLineMetric', // this variable is assumed to always be present in shaders, default is 0.
   [Ops.Var]: (context, expression) => {
     const firstArg = /** @type {LiteralExpression} */ (expression.args[0]);
     const varName = /** @type {string} */ (firstArg.value);
@@ -372,14 +366,14 @@ ${tests.join('\n')}
     }
     if (compiledArgs.length === 2) {
       //grayscale with alpha
-      return `(${compiledArgs[1]} * vec4(vec3(${compiledArgs[0]} / 255.0), 1.0))`;
+      return `vec4(vec3(${compiledArgs[0]} / 255.0), ${compiledArgs[1]})`;
     }
     const rgb = compiledArgs.slice(0, 3).map((color) => `${color} / 255.0`);
     if (compiledArgs.length === 3) {
       return `vec4(${rgb.join(', ')}, 1.0)`;
     }
     const alpha = compiledArgs[3];
-    return `(${alpha} * vec4(${rgb.join(', ')}, 1.0))`;
+    return `vec4(${rgb.join(', ')}, ${alpha})`;
   }),
   [Ops.Band]: createCompiler(([band, xOffset, yOffset], context) => {
     if (!(GET_BAND_VALUE_FUNC in context.functions)) {
@@ -483,6 +477,12 @@ function compile(expression, returnType, context) {
 
   if ((expression.type & NumberArrayType) > 0) {
     return arrayToGlsl(/** @type {Array<number>} */ (expression.value));
+  }
+
+  if ((expression.type & SizeType) > 0) {
+    return sizeToGlsl(
+      /** @type {number|import('../size.js').Size} */ (expression.value),
+    );
   }
 
   throw new Error(

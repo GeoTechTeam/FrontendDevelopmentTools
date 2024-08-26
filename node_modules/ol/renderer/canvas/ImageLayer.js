@@ -7,8 +7,6 @@ import ViewHint from '../../ViewHint.js';
 import {
   apply as applyTransform,
   compose as composeTransform,
-  makeInverse,
-  toString as toTransformString,
 } from '../../transform.js';
 import {
   containsCoordinate,
@@ -37,20 +35,21 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
      * @protected
      * @type {?import("../../Image.js").default}
      */
-    this.image_ = null;
+    this.image = null;
   }
 
   /**
    * @return {import('../../DataTile.js').ImageLike} Image.
    */
   getImage() {
-    return !this.image_ ? null : this.image_.getImage();
+    return !this.image ? null : this.image.getImage();
   }
 
   /**
    * Determine whether render should be called.
    * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @return {boolean} Layer is ready to be rendered.
+   * @override
    */
   prepareFrame(frameState) {
     const layerState = frameState.layerStatesArray[frameState.layerIndex];
@@ -85,22 +84,23 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
         );
         if (image) {
           if (this.loadImage(image)) {
-            this.image_ = image;
+            this.image = image;
           } else if (image.getState() === ImageState.EMPTY) {
-            this.image_ = null;
+            this.image = null;
           }
         }
       } else {
-        this.image_ = null;
+        this.image = null;
       }
     }
 
-    return !!this.image_;
+    return !!this.image;
   }
 
   /**
    * @param {import("../../pixel.js").Pixel} pixel Pixel.
    * @return {Uint8ClampedArray} Data at the pixel location.
+   * @override
    */
   getData(pixel) {
     const frameState = this.frameState;
@@ -121,8 +121,8 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
       }
     }
 
-    const imageExtent = this.image_.getExtent();
-    const img = this.image_.getImage();
+    const imageExtent = this.image.getExtent();
+    const img = this.image.getImage();
 
     const imageMapWidth = getWidth(imageExtent);
     const col = Math.floor(
@@ -148,9 +148,10 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
    * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @param {HTMLElement} target Target that may be used to render content to.
    * @return {HTMLElement} The rendered element.
+   * @override
    */
   renderFrame(frameState, target) {
-    const image = this.image_;
+    const image = this.image;
     const imageExtent = image.getExtent();
     const imageResolution = image.getResolution();
     const [imageResolutionX, imageResolutionY] = Array.isArray(imageResolution)
@@ -167,39 +168,13 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
     const scaleY =
       (pixelRatio * imageResolutionY) / (viewResolution * imagePixelRatio);
 
-    const extent = frameState.extent;
-    const resolution = viewState.resolution;
-    const rotation = viewState.rotation;
+    this.prepareContainer(frameState, target);
+
     // desired dimensions of the canvas in pixels
-    const width = Math.round((getWidth(extent) / resolution) * pixelRatio);
-    const height = Math.round((getHeight(extent) / resolution) * pixelRatio);
-
-    // set forward and inverse pixel transforms
-    composeTransform(
-      this.pixelTransform,
-      frameState.size[0] / 2,
-      frameState.size[1] / 2,
-      1 / pixelRatio,
-      1 / pixelRatio,
-      rotation,
-      -width / 2,
-      -height / 2,
-    );
-    makeInverse(this.inversePixelTransform, this.pixelTransform);
-
-    const canvasTransform = toTransformString(this.pixelTransform);
-
-    this.useContainer(target, canvasTransform, this.getBackground(frameState));
+    const width = this.context.canvas.width;
+    const height = this.context.canvas.height;
 
     const context = this.getRenderContext(frameState);
-    const canvas = this.context.canvas;
-
-    if (canvas.width != width || canvas.height != height) {
-      canvas.width = width;
-      canvas.height = height;
-    } else if (!this.containerReused) {
-      context.clearRect(0, 0, width, height);
-    }
 
     // clipped rendering if layer extent is set
     let clipped = false;
@@ -258,10 +233,6 @@ class CanvasImageLayerRenderer extends CanvasLayerRenderer {
       context.restore();
     }
     context.imageSmoothingEnabled = true;
-
-    if (canvasTransform !== canvas.style.transform) {
-      canvas.style.transform = canvasTransform;
-    }
 
     return this.container;
   }

@@ -16,12 +16,6 @@ import {
   hitDetect,
 } from '../../render/canvas/hitdetect.js';
 import {
-  apply,
-  compose as composeTransform,
-  makeInverse,
-  toString as transformToString,
-} from '../../transform.js';
-import {
   buffer,
   containsExtent,
   createEmpty,
@@ -64,16 +58,25 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     this.boundHandleStyleImageChange_ = this.handleStyleImageChange_.bind(this);
 
     /**
+     * @private
      * @type {boolean}
      */
     this.animatingOrInteracting_;
 
     /**
+     * @private
      * @type {ImageData|null}
      */
     this.hitDetectionImageData_ = null;
 
     /**
+     * @private
+     * @type {boolean}
+     */
+    this.clipped_ = false;
+
+    /**
+     * @private
      * @type {Array<import("../../Feature.js").default>}
      */
     this.renderedFeatures_ = null;
@@ -131,6 +134,12 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
      * @type {function(import("../../Feature.js").default, import("../../Feature.js").default): number|null}
      */
     this.renderedRenderOrder_ = null;
+
+    /**
+     * @private
+     * @type {boolean}
+     */
+    this.renderedFrameDeclutter_;
 
     /**
      * @private
@@ -197,15 +206,18 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       ? Math.floor((extent[0] - projectionExtent[0]) / worldWidth)
       : 0;
     do {
-      const transform = this.getRenderTransform(
+      let transform = this.getRenderTransform(
         center,
         resolution,
-        rotation,
+        0,
         pixelRatio,
         width,
         height,
         world * worldWidth,
       );
+      if (frameState.declutter) {
+        transform = transform.slice(0);
+      }
       executorGroup.execute(
         context,
         [context.canvas.width, context.canvas.height],
@@ -268,12 +280,16 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
   /**
    * Render deferred instructions.
    * @param {import("../../Map.js").FrameState} frameState Frame state.
+   * @override
    */
   renderDeferredInternal(frameState) {
     if (!this.replayGroup_) {
       return;
     }
     this.replayGroup_.renderDeferred();
+    if (this.clipped_) {
+      this.context.restore();
+    }
     this.resetDrawContext_();
   }
 
@@ -282,35 +298,15 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
    * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @param {HTMLElement|null} target Target that may be used to render content to.
    * @return {HTMLElement|null} The rendered element.
+   * @override
    */
   renderFrame(frameState, target) {
-    const pixelRatio = frameState.pixelRatio;
     const layerState = frameState.layerStatesArray[frameState.layerIndex];
     this.opacity_ = layerState.opacity;
-    const extent = frameState.extent;
-    const resolution = frameState.viewState.resolution;
-    const width = Math.round((getWidth(extent) / resolution) * pixelRatio);
-    const height = Math.round((getHeight(extent) / resolution) * pixelRatio);
+    const viewState = frameState.viewState;
 
-    // set forward and inverse pixel transforms
-    composeTransform(
-      this.pixelTransform,
-      frameState.size[0] / 2,
-      frameState.size[1] / 2,
-      1 / pixelRatio,
-      1 / pixelRatio,
-      0,
-      -width / 2,
-      -height / 2,
-    );
-    makeInverse(this.inversePixelTransform, this.pixelTransform);
-
-    const canvasTransform = transformToString(this.pixelTransform);
-
-    this.useContainer(target, canvasTransform, this.getBackground(frameState));
-
+    this.prepareContainer(frameState, target);
     const context = this.context;
-    const canvas = context.canvas;
 
     const replayGroup = this.replayGroup_;
     let render = replayGroup && !replayGroup.isEmpty();
@@ -323,31 +319,19 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       }
     }
 
-    // resize and clear
-    if (canvas.width != width || canvas.height != height) {
-      canvas.width = width;
-      canvas.height = height;
-      if (canvas.style.transform !== canvasTransform) {
-        canvas.style.transform = canvasTransform;
-      }
-    } else if (!this.containerReused) {
-      context.clearRect(0, 0, width, height);
-    }
-
     this.setDrawContext_();
 
     this.preRender(context, frameState);
 
-    const viewState = frameState.viewState;
     const projection = viewState.projection;
 
     // clipped rendering if layer extent is set
-    let clipped = false;
+    this.clipped_ = false;
     if (render && layerState.extent && this.clipping) {
       const layerExtent = fromUserExtent(layerState.extent, projection);
       render = intersectsExtent(layerExtent, frameState.extent);
-      clipped = render && !containsExtent(layerExtent, frameState.extent);
-      if (clipped) {
+      this.clipped_ = render && !containsExtent(layerExtent, frameState.extent);
+      if (this.clipped_) {
         this.clipUnrotated(context, frameState, layerExtent);
       }
     }
@@ -360,7 +344,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       );
     }
 
-    if (clipped) {
+    if (!frameState.declutter && this.clipped_) {
       context.restore();
     }
 
@@ -381,12 +365,16 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
    * @param {import("../../pixel.js").Pixel} pixel Pixel.
    * @return {Promise<Array<import("../../Feature").default>>} Promise
    * that resolves with an array of features.
+   * @override
    */
   getFeatures(pixel) {
     return new Promise((resolve) => {
-      if (!this.hitDetectionImageData_ && !this.animatingOrInteracting_) {
-        const size = [this.context.canvas.width, this.context.canvas.height];
-        apply(this.pixelTransform, size);
+      if (
+        this.frameState &&
+        !this.hitDetectionImageData_ &&
+        !this.animatingOrInteracting_
+      ) {
+        const size = this.frameState.size.slice();
         const center = this.renderedCenter_;
         const resolution = this.renderedResolution_;
         const rotation = this.renderedRotation_;
@@ -480,6 +468,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
    * @param {Array<import("../Map.js").HitMatch<T>>} matches The hit detected matches with tolerance.
    * @return {T|undefined} Callback result.
    * @template T
+   * @override
    */
   forEachFeatureAtCoordinate(
     coordinate,
@@ -554,6 +543,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
 
   /**
    * Perform action necessary to get the layer rendered after new fonts have loaded
+   * @override
    */
   handleFontsChanged() {
     const layer = this.getLayer();
@@ -575,6 +565,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
    * Determine whether render should be called.
    * @param {import("../../Map.js").FrameState} frameState Frame state.
    * @return {boolean} Layer is ready to be rendered.
+   * @override
    */
   prepareFrame(frameState) {
     const vectorLayer = this.getLayer();
@@ -664,6 +655,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
       this.renderedResolution_ == resolution &&
       this.renderedRevision_ == vectorLayerRevision &&
       this.renderedRenderOrder_ == vectorLayerRenderOrder &&
+      this.renderedFrameDeclutter_ === !!frameState.declutter &&
       containsExtent(this.wrappedRenderedExtent_, extent)
     ) {
       if (!equals(this.renderedExtent_, renderedExtent)) {
@@ -757,6 +749,7 @@ class CanvasVectorLayerRenderer extends CanvasLayerRenderer {
     this.renderedResolution_ = resolution;
     this.renderedRevision_ = vectorLayerRevision;
     this.renderedRenderOrder_ = vectorLayerRenderOrder;
+    this.renderedFrameDeclutter_ = !!frameState.declutter;
     this.renderedExtent_ = renderedExtent;
     this.wrappedRenderedExtent_ = extent;
     this.renderedCenter_ = center;
