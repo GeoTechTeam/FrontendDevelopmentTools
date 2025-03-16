@@ -15,8 +15,8 @@
   "dependencies": {
     "@quasar/extras": "^1.16.4",
     "@vueuse/core": "^11.0.3",
+    "@ysx-libs/vue-virtual-tree": "^0.0.13",
     "axios": "^1.7.5",
-    "chartjs": "^0.3.24",
     "ol": "^10.1.0",
     "pinia": "^2.2.2",
     "pinia-plugin-persistedstate": "^3.2.1",
@@ -27,7 +27,7 @@
     "vue-chartjs": "^5.3.1",
     "vue-i18n": "^9.0.0",
     "vue-router": "^4.4.3",
-    "vue-tour": "^2.0.0"
+    "vue3-tour": "^1.0.3"
   },
   "devDependencies": {
     "@intlify/vite-plugin-vue-i18n": "^3.3.1",

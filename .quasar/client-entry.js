@@ -42,8 +42,6 @@ import quasarUserOptions from './quasar-user-options.js'
 
 
 
-import { addPreFetchHooks } from './client-prefetch.js'
-
 
 
 console.info('[Quasar] Running SPA.')
@@ -121,8 +119,6 @@ async function start ({
   
 
     
-    addPreFetchHooks({ router, store })
-    
 
     
       app.mount('#q-app')
@@ -156,7 +152,9 @@ createQuasarApp(createApp, quasarUserOptions)
 
     return Promise[ method ]([
       
-      import('boot/LibInjection')
+      import('boot/i18n'),
+      
+      import('boot/axios')
       
     ]).then(bootFiles => {
       const boot = mapFn(bootFiles).filter(entry => typeof entry === 'function')
