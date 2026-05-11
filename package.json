@@ -1,6 +1,6 @@
 {
   "name": "frontenddevolopmenttools",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Frontend development tools for building web applications",
   "productName": "FDT",
   "author": "GeoTechTeam <alexeyzavvv@gmail.com>",
@@ -14,9 +14,14 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
+    "@vue-flow/background": "^1.3.2",
+    "@vue-flow/controls": "^1.1.3",
+    "@vue-flow/core": "^1.48.2",
+    "@vue-flow/minimap": "^1.5.4",
     "@vueuse/core": "^11.0.3",
     "@ysx-libs/vue-virtual-tree": "^0.0.13",
     "axios": "^1.7.5",
+    "konva": "^10.3.0",
     "ol": "^10.1.0",
     "pinia": "^2.2.2",
     "pinia-plugin-persistedstate": "^3.2.1",
@@ -26,6 +31,7 @@
     "vue": "^3.4.38",
     "vue-chartjs": "^5.3.1",
     "vue-i18n": "^9.0.0",
+    "vue-konva": "^3.4.0",
     "vue-router": "^4.4.3",
     "vue3-tour": "^1.0.3"
   },
